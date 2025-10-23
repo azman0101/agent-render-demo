@@ -67,7 +67,7 @@ export default function Home() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [userId] = useState(() => `client_${crypto.randomUUID()}`);
   const [showSourceModal, setShowSourceModal] = useState(false);
-  
+
   const [activeSource, setActiveSource] = useState<'camera' | 'screen' | null>(null);
 
   const isStreaming = connectionState === "connected";
@@ -92,12 +92,12 @@ export default function Home() {
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
     }
-  }, [eventLog]); 
+  }, [eventLog]);
 
   return (
     <main className="flex flex-col h-screen w-full">
       <canvas ref={canvasRef} className="hidden"></canvas>
-      
+
       {showSourceModal && (
         <SourceModal
           onSelect={handleStartStream}
@@ -107,7 +107,7 @@ export default function Home() {
 
       <div className="flex-1 overflow-hidden">
         <div className="h-full grid grid-cols-1 md:grid-cols-2 gap-6 p-6 [grid-template-rows:minmax(0,1fr)]">
-          
+
           <div className="bg-gray-900 border border-gray-700 rounded-lg shadow-lg flex flex-col p-6 gap-4 overflow-hidden">
             <h2 className="text-xl font-semibold">Video Feed</h2>
             <div className="relative w-full aspect-video bg-black rounded-lg overflow-hidden border border-gray-700">
@@ -144,9 +144,9 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="bg-gray-900 border border-gray-700 rounded-lg shadow-lg flex flex-col p-6 gap-4">          
+          <div className="bg-gray-900 border border-gray-700 rounded-lg shadow-lg flex flex-col p-6 gap-4">
             <h2 className="text-xl font-semibold">Transcript</h2>
-            
+
             <div ref={scrollContainerRef} className="flex-1 overflow-y-auto pr-2">
               {eventLog.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-gray-500">

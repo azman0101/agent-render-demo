@@ -3,7 +3,7 @@ import { Bot, User, Code, Terminal } from 'lucide-react';
 
 type EventPart = {
   type: 'text' | 'audio/pcm' | 'function_call' | 'function_response';
-  data: any;
+  data: string | { name: string; args?: object; response?: object };
 };
 
 type TranscriptionData = {
@@ -31,35 +31,44 @@ const EventPartCard: React.FC<{ part: EventPart; author: string }> = ({ part, au
 
   switch (part.type) {
     case 'text':
-      return (
-        <div className={`text-sm ${isAgent ? 'text-gray-200' : 'text-white font-medium'}`}>
-          {part.data}
-        </div>
-      );
+      if (typeof part.data === 'string') {
+        return (
+          <div className={`text-sm ${isAgent ? 'text-gray-200' : 'text-white font-medium'}`}>
+            {part.data}
+          </div>
+        );
+      }
+      return null;
     case 'function_call':
-      return (
-        <details className="mt-2 bg-gray-900 rounded p-2 text-xs cursor-pointer">
-          <summary className="font-medium text-yellow-400 flex items-center gap-2">
-            <Code className="w-4 h-4" />
-            Function Call: <span className="text-yellow-200">{part.data.name}</span>
-          </summary>
-          <pre className="mt-2 p-2 bg-black rounded overflow-x-auto text-gray-300">
-            {JSON.stringify(part.data.args, null, 2)}
-          </pre>
-        </details>
-      );
+      if (typeof part.data === 'object' && 'name' in part.data) {
+        return (
+          <details className="mt-2 bg-gray-900 rounded p-2 text-xs cursor-pointer">
+            <summary className="font-medium text-yellow-400 flex items-center gap-2">
+              <Code className="w-4 h-4" />
+              Function Call: <span className="text-yellow-200">{part.data.name}</span>
+            </summary>
+            <pre className="mt-2 p-2 bg-black rounded overflow-x-auto text-gray-300">
+              {JSON.stringify(part.data.args, null, 2)}
+            </pre>
+          </details>
+        );
+      }
+      return null;
     case 'function_response':
-      return (
-        <details className="mt-2 bg-gray-900 rounded p-2 text-xs cursor-pointer">
-          <summary className="font-medium text-purple-400 flex items-center gap-2">
-            <Terminal className="w-4 h-4" />
-            Function Response: <span className="text-purple-200">{part.data.name}</span>
-          </summary>
-          <pre className="mt-2 p-2 bg-black rounded overflow-x-auto text-gray-300">
-            {JSON.stringify(part.data.response, null, 2)}
-          </pre>
-        </details>
-      );
+      if (typeof part.data === 'object' && 'name' in part.data) {
+        return (
+          <details className="mt-2 bg-gray-900 rounded p-2 text-xs cursor-pointer">
+            <summary className="font-medium text-purple-400 flex items-center gap-2">
+              <Terminal className="w-4 h-4" />
+              Function Response: <span className="text-purple-200">{part.data.name}</span>
+            </summary>
+            <pre className="mt-2 p-2 bg-black rounded overflow-x-auto text-gray-300">
+              {JSON.stringify(part.data.response, null, 2)}
+            </pre>
+          </details>
+        );
+      }
+      return null;
     default:
       return null;
   }
@@ -70,7 +79,7 @@ export const SidePanel: React.FC<SidePanelProps> = ({ events }) => {
     <div className="space-y-4">
       {events.map((event) => (
         <div key={event.id} className="flex gap-3">
-          
+
           <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
             event.author === 'user' ? 'bg-blue-600' : 'bg-gray-700'
           }`}>

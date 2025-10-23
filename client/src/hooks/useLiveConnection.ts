@@ -6,7 +6,7 @@ const RECORDER_WORKLET_PATH = "/audio-recorder-worklet.js";
 const PLAYER_WORKLET_PATH = "/audio-player-worklet.js";
 
 type ConnectionState = "idle" | "connecting" | "connected" | "closing" | "closed" | "error";
-const FRAME_CAPTURE_INTERVAL_MS = 250; 
+const FRAME_CAPTURE_INTERVAL_MS = 250;
 
 export function useLiveConnection() {
   const [connectionState, setConnectionState] = useState<ConnectionState>("idle");
@@ -21,7 +21,7 @@ export function useLiveConnection() {
 
   const audioPlayerContextRef = useRef<AudioContext | null>(null);
   const audioPlayerNodeRef = useRef<AudioWorkletNode | null>(null);
-  
+
   const audioRecorderContextRef = useRef<AudioContext | null>(null);
   const audioRecorderNodeRef = useRef<AudioWorkletNode | null>(null);
 
@@ -64,7 +64,7 @@ export function useLiveConnection() {
 
   const sendTextMessage = useCallback((text: string) => {
     if (!text || text.trim() === "") return;
-    
+
     sendMessage({
       "mime_type": "text/plain",
       "data": text
@@ -97,7 +97,7 @@ export function useLiveConnection() {
         audioRecorderContextRef.current = new AudioContext(recorderContextOptions);
       }
       const audioCtx = audioRecorderContextRef.current;
-      
+
       if (audioCtx.state === 'suspended') {
         await audioCtx.resume();
       }
@@ -108,7 +108,7 @@ export function useLiveConnection() {
         console.error("Error adding audio recorder worklet module", e);
         return;
       }
-      
+
       const micSourceNode = audioCtx.createMediaStreamSource(stream);
       const workletNode = new AudioWorkletNode(audioCtx, "audio-recorder-processor");
 
@@ -156,6 +156,35 @@ export function useLiveConnection() {
       console.error("Error setting up audio player worklet:", error);
     }
   }, []);
+
+  const disconnect = useCallback(() => {
+    setConnectionState("closing");
+
+    wsRef.current?.close();
+    wsRef.current = null;
+
+    stopVideoFrameCapture();
+
+    audioRecorderContextRef.current?.close();
+    audioRecorderNodeRef.current?.port.close();
+    audioRecorderContextRef.current = null;
+    audioRecorderNodeRef.current = null;
+
+    audioPlayerContextRef.current?.close();
+    audioPlayerNodeRef.current?.port.close();
+    audioPlayerContextRef.current = null;
+    audioPlayerNodeRef.current = null;
+
+    mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
+    mediaStreamRef.current = null;
+
+    if (videoElementRef.current) {
+      videoElementRef.current.srcObject = null;
+    }
+
+    setConnectionState("closed");
+    console.log("Disconnected and cleaned up all resources.");
+  }, [stopVideoFrameCapture]);
 
   const connect = useCallback(
     async (
@@ -209,7 +238,8 @@ export function useLiveConnection() {
         videoEl.srcObject = stream;
         videoEl.play();
 
-        const ws = new WebSocket(`ws://127.0.0.1:8000/ws/${userId}?is_audio=true`);
+        const wsUrl = process.env.NEXT_PUBLIC_WEBSOCKET_URL || `wss://agent-render-demo.onrender.com/ws/${userId}?is_audio=true`;
+        const ws = new WebSocket(wsUrl);
         wsRef.current = ws;
 
         ws.onopen = () => {
@@ -222,12 +252,12 @@ export function useLiveConnection() {
 
         ws.onmessage = (event) => {
           const agentEvent = JSON.parse(event.data) as StructuredAgentEvent;
-          
+
           for (const part of agentEvent.parts) {
-            if (part.type === "audio/pcm") {
+            if (part.type === "audio/pcm" && typeof part.data === 'string') {
               const audioDataBytes = base64ToArray(part.data);
               audioPlayerNodeRef.current?.port.postMessage(
-                { type: 'audio_data', buffer: audioDataBytes.buffer }, 
+                { type: 'audio_data', buffer: audioDataBytes.buffer },
                 [audioDataBytes.buffer]
               );
             }
@@ -243,9 +273,9 @@ export function useLiveConnection() {
               author: 'user',
               is_partial: false,
               turn_complete: true,
-              parts: [{ 
-                type: 'text', 
-                data: agentEvent.input_transcription.text 
+              parts: [{
+                type: 'text',
+                data: agentEvent.input_transcription.text
               }],
             };
             setEventLog((prevLog) => [...prevLog, finalUserEvent]);
@@ -259,8 +289,8 @@ export function useLiveConnection() {
             const finalAgentEvent: StructuredAgentEvent = {
               id: crypto.randomUUID(),
               author: 'agent',
-              is_partial: false, 
-              turn_complete: agentEvent.turn_complete, 
+              is_partial: false,
+              turn_complete: agentEvent.turn_complete,
               parts: finalParts,
             };
             setEventLog((prevLog) => [...prevLog, finalAgentEvent]);
@@ -286,37 +316,8 @@ export function useLiveConnection() {
         setConnectionState("error");
       }
     },
-    [connectionState, setupAudioRecording, startVideoFrameCapture, setupAudioPlayback]
+    [setupAudioRecording, startVideoFrameCapture, setupAudioPlayback, disconnect]
   );
-
-  const disconnect = useCallback(() => {
-    setConnectionState("closing");
-    
-    wsRef.current?.close();
-    wsRef.current = null;
-
-    stopVideoFrameCapture();
-
-    audioRecorderContextRef.current?.close();
-    audioRecorderNodeRef.current?.port.close();
-    audioRecorderContextRef.current = null;
-    audioRecorderNodeRef.current = null;
-    
-    audioPlayerContextRef.current?.close();
-    audioPlayerNodeRef.current?.port.close();
-    audioPlayerContextRef.current = null;
-    audioPlayerNodeRef.current = null;
-
-    mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
-    mediaStreamRef.current = null;
-
-    if (videoElementRef.current) {
-      videoElementRef.current.srcObject = null;
-    }
-    
-    setConnectionState("closed");
-    console.log("Disconnected and cleaned up all resources.");
-  }, [stopVideoFrameCapture]);
 
   return {
     connectionState,
