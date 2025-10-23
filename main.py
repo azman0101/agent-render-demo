@@ -30,14 +30,15 @@ async def start_agent_session(user_id: str):
     """Starts an agent session"""
 
     # Create a Runner
+    app_name = os.getenv("APP_NAME", "realtime-conversational-agent")
     runner = InMemoryRunner(
-        app_name=os.getenv("APP_NAME"),
+        app_name=app_name,
         agent=root_agent
     )
 
     # Create a Session
     session = await runner.session_service.create_session(
-        app_name=os.getenv("APP_NAME"),
+        app_name=app_name,
         user_id=user_id,
     )
 

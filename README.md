@@ -21,7 +21,11 @@ This project is a full-stack application for a real-time conversational agent, c
     -   Navigate to the root directory.
     -   Create and activate a virtual environment.
     -   Install the Python dependencies: `pip install -r requirements.txt`
-    -   Create a `.env` file and add your `GOOGLE_API_KEY`.
+    -   Create a `.env` file and add your `GOOGLE_API_KEY` and an optional `APP_NAME`:
+        ```
+        GOOGLE_API_KEY="YOUR_API_KEY"
+        APP_NAME="MyAgent"
+        ```
     -   Start the server: `uvicorn main:app --reload`
 
 2.  **Frontend Setup:**
