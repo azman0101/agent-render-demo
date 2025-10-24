@@ -31,10 +31,10 @@ load_dotenv()
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
 # Log available models that support bidiGenerateContent
-print("Available models supporting 'bidiGenerateContent':")
+logging.info("Available models supporting 'bidiGenerateContent':")
 for m in genai.list_models():
   if "bidiGenerateContent" in m.supported_generation_methods:
-    print(m.name)
+    logging.info(m.name)
 
 async def start_agent_session(user_id: str):
     """Starts an agent session"""
