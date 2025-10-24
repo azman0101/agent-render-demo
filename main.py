@@ -25,9 +25,9 @@ load_dotenv()
 client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
 
 # Log available models that support bidiGenerateContent
-print("Available models:")
-for m in client.models.list():
-  print(m)
+# print("Available models:")
+# for m in client.models.list():
+#  print(m)
 
 async def start_agent_session(user_id: str):
     """Starts an agent session"""
