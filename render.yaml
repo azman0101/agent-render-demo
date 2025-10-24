@@ -10,7 +10,7 @@ services:
       - key: APP_NAME
         value: realtime-conversational-agent
       - key: PYTHON_VERSION
-        value: "3.11.0"
+        value: "3.11.11"
         
   - type: web
     name: realtime-conversational-agent-client
