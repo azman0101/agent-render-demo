@@ -10,8 +10,6 @@ services:
     envVars:
       - key: APP_NAME
         value: realtime-conversational-agent
-      - key: GOOGLE_API_KEY
-        fromSecretFile: ".env"
 
   - type: web
     name: realtime-conversational-agent-client
