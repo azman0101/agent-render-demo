@@ -28,5 +28,4 @@ root_agent = Agent(
    model="gemini-live-2.5-flash-preview-native-audio-09-2025", # Model from the original example
    description="A helpful AI assistant that can greet users.", # Combined description
    instruction=AGENT_INSTRUCTION, # Instruction from prompts.py
-   tools=[greet], # Tool from your code
 )
