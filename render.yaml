@@ -9,7 +9,7 @@ services:
     healthCheckPath: /
     envVars:
       - key: APP_NAME
-        value: example_agent
+        value: agents
       - key: GOOGLE_API_KEY
         fromSecretFile: ".env"
 
