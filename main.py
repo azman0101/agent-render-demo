@@ -23,8 +23,18 @@ import logging
 from starlette.websockets import WebSocketDisconnect
 
 from example_agent.agent import root_agent
+import google.generativeai as genai
 
 load_dotenv()
+
+# Configure the Gemini API key
+genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+
+# Log available models that support bidiGenerateContent
+print("Available models supporting 'bidiGenerateContent':")
+for m in genai.list_models():
+  if "bidiGenerateContent" in m.supported_generation_methods:
+    print(m.name)
 
 async def start_agent_session(user_id: str):
     """Starts an agent session"""
