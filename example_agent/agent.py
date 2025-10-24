@@ -5,7 +5,6 @@ def greet(name: str) -> str:
     return f"Hello, {name}!"
 
 root_agent = Agent(
-    app_name="realtime-conversational-agent",
     model='gemini-1.5-flash',
     name='root_agent',
     description="A simple agent that can greet the user.",
