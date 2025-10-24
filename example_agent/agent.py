@@ -29,5 +29,4 @@ root_agent = Agent(
    description="A helpful AI assistant that can greet users.", # Combined description
    instruction=AGENT_INSTRUCTION, # Instruction from prompts.py
    tools=[greet], # Tool from your code
-   generation_config=genai_config # Config from the original example
 )
