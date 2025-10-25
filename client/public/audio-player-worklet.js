@@ -12,6 +12,7 @@ class AudioPlayerProcessor extends AudioWorkletProcessor {
     this.currentChunk = null;
     this.currentChunkIndex = 0;
 
+    
     this.port.onmessage = (event) => {
       if (event.data.type === 'audio_data') {
         // Add new audio data to our buffer

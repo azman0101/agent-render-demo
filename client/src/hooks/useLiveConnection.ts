@@ -235,6 +235,17 @@ export function useLiveConnection() {
               audio: true,
               video: false,
             });
+          } catch (micErr) {
+            console.error("Could not get microphone audio:", micErr);
+          }
+
+          if (micStream && micStream.getAudioTracks().length > 0) {
+            stream = new MediaStream([
+              ...screenStream.getVideoTracks(),
+              ...micStream.getAudioTracks(),
+            ]);
+          } else {
+            stream = screenStream;
           }
 
         } else {
@@ -261,7 +272,13 @@ export function useLiveConnection() {
         }
 
         const envWs = process.env.NEXT_PUBLIC_WEBSOCKET_URL;
-        const wsUrl = process.env.NEXT_PUBLIC_WEBSOCKET_URL || `wss://agent-render-demo.onrender.com/ws/${userId}?is_audio=true`;
+        let wsUrl: string;
+        if (envWs) {
+          const base = envWs.replace(/\/$/, "");
+          wsUrl = `${base}/ws/${userId}?is_audio=true`;
+        } else {
+          wsUrl = `wss://agent-render-demo.onrender.com/ws/${userId}?is_audio=true`;
+        }
 
         // Debug logging to help diagnose handshake / origin issues at runtime.
         // Note: NEXT_PUBLIC_* env vars are injected at build time for Next.js deployments.

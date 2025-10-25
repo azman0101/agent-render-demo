@@ -11,6 +11,7 @@ class AudioRecorderProcessor extends AudioWorkletProcessor {
     this.speechDuration = 0.2;   // Min duration (in sec) to count as speech
     this.silenceDuration = 0.5;  // Max duration (in sec) of silence to stop "speech"
 
+    
     this.speechFrames = 0;
     this.silenceFrames = 0;
     this.isSpeaking = false;
@@ -66,6 +67,7 @@ class AudioRecorderProcessor extends AudioWorkletProcessor {
       [pcmData.buffer]
     );
 
+    
     return true;
   }
 }

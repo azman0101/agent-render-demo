@@ -72,6 +72,7 @@ const SourceModal = ({
 export default function Home() {
   const {
     connectionState,
+    latestTextMessage,
     eventLog,
     connect,
     disconnect,
