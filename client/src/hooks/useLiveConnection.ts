@@ -202,7 +202,7 @@ export function useLiveConnection() {
 
       try {
         let stream: MediaStream;
-        const sendVideo = options.sendVideo ?? true;
+        const sendVideo = options.sendVideo ?? false;
 
         if (source === 'screen') {
           if (sendVideo) {

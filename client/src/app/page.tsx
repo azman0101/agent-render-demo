@@ -16,9 +16,11 @@ const SourceModal = ({
   onSelect,
   onClose,
 }: {
-  onSelect: (source: "camera" | "screen") => void;
+  onSelect: (source: "camera" | "screen", sendVideo: boolean) => void;
   onClose: () => void;
 }) => {
+  const [sendVideo, setSendVideo] = useState<boolean>(false);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
       <div className="bg-gray-800 rounded-lg shadow-2xl p-8 max-w-sm w-full relative">
@@ -29,18 +31,32 @@ const SourceModal = ({
           <X className="w-6 h-6" />
         </button>
         <h2 className="text-2xl font-semibold mb-6 text-center">
-          Choose your video source
+          Choose your source
         </h2>
+
+        <div className="mb-4 flex items-center gap-3">
+          <input
+            id="sendVideo"
+            type="checkbox"
+            checked={sendVideo}
+            onChange={(e) => setSendVideo(e.target.checked)}
+            className="w-4 h-4"
+          />
+          <label htmlFor="sendVideo" className="text-gray-300">
+            Enable video (send preview)
+          </label>
+        </div>
+
         <div className="flex flex-col gap-4">
           <button
-            onClick={() => onSelect("camera")}
+            onClick={() => onSelect("camera", sendVideo)}
             className="flex items-center justify-center gap-3 px-6 py-4 bg-blue-600 hover:bg-blue-700 rounded-lg text-lg font-semibold transition-all duration-200"
           >
             <Camera className="w-6 h-6" />
             Use Camera
           </button>
           <button
-            onClick={() => onSelect("screen")}
+            onClick={() => onSelect("screen", sendVideo)}
             className="flex items-center justify-center gap-3 px-6 py-4 bg-gray-700 hover:bg-gray-600 rounded-lg text-lg font-semibold transition-all duration-200"
           >
             <Monitor className="w-6 h-6" />
@@ -73,11 +89,11 @@ export default function Home() {
   const isStreaming = connectionState === "connected";
   const isConnecting = connectionState === "connecting";
 
-  const handleStartStream = (source: "camera" | "screen") => {
+  const handleStartStream = (source: "camera" | "screen", sendVideo: boolean) => {
     setShowSourceModal(false);
     if (videoRef.current && canvasRef.current) {
       setActiveSource(source);
-      connect(videoRef.current, canvasRef.current, userId, source);
+      connect(videoRef.current, canvasRef.current, userId, source, { sendVideo });
     } else {
       console.error("Video or Canvas refs are not set.");
     }
@@ -121,7 +137,7 @@ export default function Home() {
                   ${activeSource === 'camera' ? 'transform -scale-x-100' : ''}
                 `}
               />
-               {!isStreaming && !isConnecting && (
+              {!isStreaming && !isConnecting && (
                 <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center z-10">
                   <Video className="w-16 h-16 text-gray-400" />
                   <p className="mt-2 text-gray-300">Video feed is offline</p>
