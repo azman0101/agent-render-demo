@@ -77,7 +77,7 @@ export function useLiveConnection() {
       turn_complete: true,
       parts: [{ type: 'text', data: text }]
     };
-    setEventLog((prevLog) => [...prevLog, userEvent]);
+  setEventLog((prevLog: StructuredAgentEvent[]) => [...prevLog, userEvent]);
 
   }, [sendMessage]);
 
@@ -191,7 +191,8 @@ export function useLiveConnection() {
       videoEl: HTMLVideoElement,
       canvasEl: HTMLCanvasElement,
       userId: string,
-      source: 'camera' | 'screen'
+      source: 'camera' | 'screen',
+      options: { sendVideo?: boolean } = {}
     ) => {
       setConnectionState("connecting");
       setLatestTextMessage(null);
@@ -200,43 +201,64 @@ export function useLiveConnection() {
       canvasElementRef.current = canvasEl;
 
       try {
-        let stream: MediaStream;
+  let stream: MediaStream;
+  const sendVideo = options.sendVideo ?? true;
 
         if (source === 'screen') {
-          const screenStream = await navigator.mediaDevices.getDisplayMedia({
-            video: { width: 1280, height: 720 },
-            audio: false,
-          });
+          if (sendVideo) {
+            const screenStream = await navigator.mediaDevices.getDisplayMedia({
+              video: { width: 1280, height: 720 },
+              audio: false,
+            });
 
-          let micStream: MediaStream | null = null;
-          try {
-            micStream = await navigator.mediaDevices.getUserMedia({
+            let micStream: MediaStream | null = null;
+            try {
+              micStream = await navigator.mediaDevices.getUserMedia({
+                audio: true,
+                video: false,
+              });
+            } catch (micErr) {
+              console.error("Could not get microphone audio:", micErr);
+            }
+
+            if (micStream && micStream.getAudioTracks().length > 0) {
+              stream = new MediaStream([
+                ...screenStream.getVideoTracks(),
+                ...micStream.getAudioTracks(),
+              ]);
+            } else {
+              stream = screenStream;
+            }
+          } else {
+            // audio-only mode: don't capture the screen, just get the mic
+            stream = await navigator.mediaDevices.getUserMedia({
               audio: true,
               video: false,
             });
-          } catch (micErr) {
-            console.error("Could not get microphone audio:", micErr);
-          }
-
-          if (micStream && micStream.getAudioTracks().length > 0) {
-            stream = new MediaStream([
-              ...screenStream.getVideoTracks(),
-              ...micStream.getAudioTracks(),
-            ]);
-          } else {
-            stream = screenStream;
           }
 
         } else {
           stream = await navigator.mediaDevices.getUserMedia({
             audio: true,
-            video: { width: 1280, height: 720 },
+            video: sendVideo ? { width: 1280, height: 720 } : false,
           });
         }
 
         mediaStreamRef.current = stream;
-        videoEl.srcObject = stream;
-        videoEl.play();
+        // attach video preview and start frame capture only when we actually have video tracks
+        if (stream.getVideoTracks().length > 0) {
+          videoEl.srcObject = stream;
+          try {
+            // some browsers require play() to be awaited or may reject; ignore errors
+            await videoEl.play();
+          } catch (e) {
+            // ignore play() errors for autoplay/policy reasons
+          }
+        } else {
+          // ensure no stale preview or capture loop runs
+          videoEl.srcObject = null;
+          stopVideoFrameCapture();
+        }
 
         const wsUrl = process.env.NEXT_PUBLIC_WEBSOCKET_URL || `wss://agent-render-demo.onrender.com/ws/${userId}?is_audio=true`;
         const ws = new WebSocket(wsUrl);
@@ -247,7 +269,9 @@ export function useLiveConnection() {
           setConnectionState("connected");
           setupAudioRecording(stream);
           setupAudioPlayback();
-          startVideoFrameCapture();
+          if (stream.getVideoTracks().length > 0) {
+            startVideoFrameCapture();
+          }
         };
 
         ws.onmessage = (event) => {
@@ -278,7 +302,7 @@ export function useLiveConnection() {
                 data: agentEvent.input_transcription.text
               }],
             };
-            setEventLog((prevLog) => [...prevLog, finalUserEvent]);
+            setEventLog((prevLog: StructuredAgentEvent[]) => [...prevLog, finalUserEvent]);
           }
 
           const finalParts = agentEvent.parts.filter(
@@ -293,7 +317,7 @@ export function useLiveConnection() {
               turn_complete: agentEvent.turn_complete,
               parts: finalParts,
             };
-            setEventLog((prevLog) => [...prevLog, finalAgentEvent]);
+            setEventLog((prevLog: StructuredAgentEvent[]) => [...prevLog, finalAgentEvent]);
           }
 
           if (agentEvent.turn_complete) {

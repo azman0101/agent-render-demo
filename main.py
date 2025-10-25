@@ -5,11 +5,18 @@ import os
 
 from dotenv import load_dotenv
 
+from google.genai.types import (
+    Part,
+    Content,
+    Blob,
+)
+
 from google.adk.runners import InMemoryRunner
 from google.adk.agents import LiveRequestQueue
 from google.adk.agents.run_config import RunConfig
-from google.genai import types as genai_types
-from google import genai
+from google.genai import types
+
+# from google import genai
 
 from fastapi import FastAPI, WebSocket
 
@@ -22,7 +29,7 @@ from example_agent.agent import root_agent
 load_dotenv()
 
 # Create a Gemini client
-client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
+# client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
 
 # Log available models that support bidiGenerateContent
 # print("Available models:")
@@ -51,18 +58,19 @@ async def start_agent_session(user_id: str):
     # Setup RunConfig
     run_config = RunConfig(
         streaming_mode="bidi",
-        realtime_input_config=genai_types.RealtimeInputConfig(
-            automatic_activity_detection=genai_types.AutomaticActivityDetection(
-                start_of_speech_sensitivity=genai_types.StartSensitivity.START_SENSITIVITY_LOW,
-                end_of_speech_sensitivity=genai_types.EndSensitivity.END_SENSITIVITY_HIGH,
+        session_resumption=types.SessionResumptionConfig(transparent=True),
+        realtime_input_config=types.RealtimeInputConfig(
+            automatic_activity_detection=types.AutomaticActivityDetection(
+                start_of_speech_sensitivity=types.StartSensitivity.START_SENSITIVITY_LOW,
+                end_of_speech_sensitivity=types.EndSensitivity.END_SENSITIVITY_HIGH,
                 prefix_padding_ms=0,
                 silence_duration_ms=0,
             )
         ),
         response_modalities = ["AUDIO"],
-        speech_config=genai_types.SpeechConfig(
-            voice_config=genai_types.VoiceConfig(
-                prebuilt_voice_config=genai_types.PrebuiltVoiceConfig(
+        speech_config=types.SpeechConfig(
+            voice_config=types.VoiceConfig(
+                prebuilt_voice_config=types.PrebuiltVoiceConfig(
                     voice_name=os.getenv("AGENT_VOICE")
                 )
             ),
@@ -102,6 +110,7 @@ async def agent_to_client_messaging(websocket: WebSocket, live_events):
 
             transcription_text = "".join(part.text for part in event.content.parts if part.text)
 
+            
             if hasattr(event.content, "role") and event.content.role == "user":
                 if transcription_text:
                     message_to_send["input_transcription"] = {
@@ -109,6 +118,7 @@ async def agent_to_client_messaging(websocket: WebSocket, live_events):
                         "is_final": not event.partial
                     }
 
+            
             elif hasattr(event.content, "role") and event.content.role == "model":
                 if transcription_text:
                     message_to_send["output_transcription"] = {
@@ -123,6 +133,7 @@ async def agent_to_client_messaging(websocket: WebSocket, live_events):
                         encoded_audio = base64.b64encode(audio_data).decode("ascii")
                         message_to_send["parts"].append({"type": "audio/pcm", "data": encoded_audio})
 
+                    
                     elif part.function_call:
                         message_to_send["parts"].append({
                             "type": "function_call",
@@ -131,7 +142,6 @@ async def agent_to_client_messaging(websocket: WebSocket, live_events):
                                 "args": part.function_call.args or {}
                             }
                         })
-
                     elif part.function_response:
                         message_to_send["parts"].append({
                             "type": "function_response",
@@ -162,18 +172,19 @@ async def client_to_agent_messaging(websocket: WebSocket, live_request_queue: Li
 
             if mime_type == "text/plain":
                 data = message["data"]
-                content = genai_types.Content(role="user", parts=[genai_types.Part.from_text(text=data)])
+                content = Content(role="user", parts=[Part.from_text(text=data)])
                 live_request_queue.send_content(content=content)
 
             elif mime_type == "audio/pcm":
                 data = message["data"]
                 decoded_data = base64.b64decode(data)
-                live_request_queue.send_realtime(genai_types.Blob(data=decoded_data, mime_type=mime_type))
+                live_request_queue.send_realtime(Blob(data=decoded_data, mime_type=mime_type))
 
             elif mime_type == "image/jpeg":
                 data = message["data"]
                 decoded_data = base64.b64decode(data)
-                live_request_queue.send_realtime(genai_types.Blob(data=decoded_data, mime_type=mime_type))
+                live_request_queue.send_realtime(Blob(data=decoded_data, mime_type=mime_type))
+                
 
             else:
                 logging.warning(f"Mime type not supported: {mime_type}")
