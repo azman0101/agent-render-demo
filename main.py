@@ -84,7 +84,7 @@ async def start_agent_session(user_id: str):
                 silence_duration_ms=0,
             )
         ),
-        response_modalities=["AUDIO"],
+        response_modalities=["TEXT","AUDIO"],
         speech_config=types.SpeechConfig(
             voice_config=types.VoiceConfig(
                 prebuilt_voice_config=types.PrebuiltVoiceConfig(
@@ -247,13 +247,13 @@ app.add_middleware(
 async def websocket_endpoint(websocket: WebSocket, user_id: str):
     """Client websocket endpoint"""
 
-    # Debug: log incoming websocket handshake headers and client address.
-    # This helps diagnose 403 handshakes coming from reverse proxies / ngrok
-    try:
-        headers = dict(websocket.headers)
-    except Exception:
-        headers = {}
-    logging.info(f"WebSocket handshake attempt - client={getattr(websocket, 'client', None)} origin={headers.get('origin')} host={headers.get('host')} headers={headers}")
+    # # Debug: log incoming websocket handshake headers and client address.
+    # # This helps diagnose 403 handshakes coming from reverse proxies / ngrok
+    # try:
+    #     headers = dict(websocket.headers)
+    # except Exception:
+    #     headers = {}
+    # logging.info(f"WebSocket handshake attempt - client={getattr(websocket, 'client', None)} origin={headers.get('origin')} host={headers.get('host')} headers={headers}")
 
     # Wait for client connection
     await websocket.accept()

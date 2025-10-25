@@ -2,6 +2,7 @@
 
 import { useRef, useState, useEffect } from "react";
 import { useLiveConnection } from "@/hooks/useLiveConnection";
+import ChatBox from "@/components/ChatBox";
 import {
   Video,
   Mic,
@@ -76,6 +77,7 @@ export default function Home() {
     eventLog,
     connect,
     disconnect,
+    sendTextMessage,
   } = useLiveConnection();
 
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -162,6 +164,10 @@ export default function Home() {
 
           <div className="bg-gray-900 border border-gray-700 rounded-lg shadow-lg flex flex-col p-6 gap-4">
             <h2 className="text-xl font-semibold">Transcript</h2>
+
+            <div className="mb-4">
+              <ChatBox sendTextMessage={sendTextMessage} latestTextMessage={latestTextMessage} />
+            </div>
 
             <div ref={scrollContainerRef} className="flex-1 overflow-y-auto pr-2">
               {eventLog.length === 0 ? (
