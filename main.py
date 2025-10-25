@@ -59,7 +59,7 @@ async def start_agent_session(user_id: str):
                 silence_duration_ms=0,
             )
         ),
-        response_modalities: ["TEXT", "AUDIO"],
+        response_modalities=["TEXT", "AUDIO"],
         speech_config=genai_types.SpeechConfig(
             voice_config=genai_types.VoiceConfig(
                 prebuilt_voice_config=genai_types.PrebuiltVoiceConfig(
