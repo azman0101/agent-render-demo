@@ -260,7 +260,13 @@ export function useLiveConnection() {
           stopVideoFrameCapture();
         }
 
+        const envWs = process.env.NEXT_PUBLIC_WEBSOCKET_URL;
         const wsUrl = process.env.NEXT_PUBLIC_WEBSOCKET_URL || `wss://agent-render-demo.onrender.com/ws/${userId}?is_audio=true`;
+
+        // Debug logging to help diagnose handshake / origin issues at runtime.
+        // Note: NEXT_PUBLIC_* env vars are injected at build time for Next.js deployments.
+        console.log("[useLiveConnection] Connecting to websocket:", wsUrl, " NEXT_PUBLIC_WEBSOCKET_URL=", envWs);
+
         const ws = new WebSocket(wsUrl);
         wsRef.current = ws;
 

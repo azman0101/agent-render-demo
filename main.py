@@ -16,9 +16,10 @@ from google.adk.agents import LiveRequestQueue
 from google.adk.agents.run_config import RunConfig
 from google.genai import types
 
-# from google import genai
+from google import genai
 
 from fastapi import FastAPI, WebSocket
+from fastapi.middleware.cors import CORSMiddleware
 
 
 import logging
@@ -29,19 +30,38 @@ from example_agent.agent import root_agent
 load_dotenv()
 
 # Create a Gemini client
-# client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
+client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
 
 # Log available models that support bidiGenerateContent
-# print("Available models:")
-# for m in client.models.list():
-#  print(m)
+print("Available models supporting bidiGenerateContent:")
+for m in client.models.list():
+    # Some model objects may not have `supported_actions` or it may be None.
+    actions = getattr(m, "supported_actions", None) or []
+
+    # supported_actions may contain simple strings or objects/enums with a `name` attribute.
+    def action_matches(a):
+        if isinstance(a, str):
+            return a == "bidiGenerateContent"
+        # try to handle enum-like members or objects
+        name = getattr(a, "name", None)
+        if isinstance(name, str):
+            return name == "bidiGenerateContent"
+        return False
+
+    if any(action_matches(a) for a in actions):
+        # Print a short, useful summary rather than the full object repr
+        try:
+            print(f"{m.name} display_name={getattr(m,'display_name',None)} supported_actions={actions}")
+        except Exception:
+            # Fallback to generic print if object doesn't expose attributes as expected
+            print(m)
 
 
 async def start_agent_session(user_id: str):
     """Starts an agent session"""
 
     # Create a Runner
-    app_name = os.getenv("APP_NAME", "example_agent")
+    app_name = os.getenv("APP_NAME", "agents")
     runner = InMemoryRunner(app_name=app_name, agent=root_agent)
 
     # Create a Session
@@ -212,10 +232,28 @@ async def client_to_agent_messaging(
 
 app = FastAPI()
 
+# Allow browser-based clients from the frontend to connect to the WebSocket.
+# In production you should set `allow_origins` to the specific origins you
+# trust instead of `['*']`.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.websocket("/ws/{user_id}")
 async def websocket_endpoint(websocket: WebSocket, user_id: str):
     """Client websocket endpoint"""
+
+    # Debug: log incoming websocket handshake headers and client address.
+    # This helps diagnose 403 handshakes coming from reverse proxies / ngrok
+    try:
+        headers = dict(websocket.headers)
+    except Exception:
+        headers = {}
+    logging.info(f"WebSocket handshake attempt - client={getattr(websocket, 'client', None)} origin={headers.get('origin')} host={headers.get('host')} headers={headers}")
 
     # Wait for client connection
     await websocket.accept()
