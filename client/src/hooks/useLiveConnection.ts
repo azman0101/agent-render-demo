@@ -235,17 +235,6 @@ export function useLiveConnection() {
               audio: true,
               video: false,
             });
-          } catch (micErr) {
-            console.error("Could not get microphone audio:", micErr);
-          }
-
-          if (micStream && micStream.getAudioTracks().length > 0) {
-            stream = new MediaStream([
-              ...screenStream.getVideoTracks(),
-              ...micStream.getAudioTracks(),
-            ]);
-          } else {
-            stream = screenStream;
           }
 
         } else {
