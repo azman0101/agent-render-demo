@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from google.adk.runners import InMemoryRunner
 from google.adk.agents import LiveRequestQueue
 from google.adk.agents.run_config import RunConfig
+from google.adk.enums.response_modality import ResponseModality
 from google.genai import types as genai_types
 from google import genai
 
@@ -59,7 +60,7 @@ async def start_agent_session(user_id: str):
                 silence_duration_ms=0,
             )
         ),
-        response_modalities=["TEXT", "AUDIO"],
+        response_modalities=[ResponseModality.TEXT, ResponseModality.AUDIO],
         speech_config=genai_types.SpeechConfig(
             voice_config=genai_types.VoiceConfig(
                 prebuilt_voice_config=genai_types.PrebuiltVoiceConfig(
