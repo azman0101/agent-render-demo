@@ -251,7 +251,7 @@ export function useLiveConnection() {
           try {
             // some browsers require play() to be awaited or may reject; ignore errors
             await videoEl.play();
-          } catch (e) {
+          } catch {
             // ignore play() errors for autoplay/policy reasons
           }
         } else {
@@ -340,7 +340,7 @@ export function useLiveConnection() {
         setConnectionState("error");
       }
     },
-    [setupAudioRecording, startVideoFrameCapture, setupAudioPlayback, disconnect]
+  [setupAudioRecording, startVideoFrameCapture, setupAudioPlayback, disconnect, stopVideoFrameCapture]
   );
 
   return {
