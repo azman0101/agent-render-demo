@@ -8,7 +8,6 @@ from dotenv import load_dotenv
 from google.adk.runners import InMemoryRunner
 from google.adk.agents import LiveRequestQueue
 from google.adk.agents.run_config import RunConfig
-from google.adk.enums.response_modality import ResponseModality
 from google.genai import types as genai_types
 from google import genai
 
