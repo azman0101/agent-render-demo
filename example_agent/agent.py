@@ -1,3 +1,5 @@
+import os
+
 # Import the main Agent class
 from google.adk.agents import Agent
 
@@ -25,7 +27,7 @@ genai_config = GenerateContentConfig(
 # --- Combined Agent Definition ---
 root_agent = Agent(
    name="example_agent",
-   model="gemini-2.0-flash-exp", # Model from the original example
+   model=os.environ.get("AGENT_MODEL", "gemini-1.5-pro-latest"), # Model from the original example
    description="A helpful AI assistant that can greet users.", # Combined description
    instruction=AGENT_INSTRUCTION, # Instruction from prompts.py
 )
