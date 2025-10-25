@@ -77,7 +77,7 @@ export function useLiveConnection() {
       turn_complete: true,
       parts: [{ type: 'text', data: text }]
     };
-  setEventLog((prevLog: StructuredAgentEvent[]) => [...prevLog, userEvent]);
+    setEventLog((prevLog: StructuredAgentEvent[]) => [...prevLog, userEvent]);
 
   }, [sendMessage]);
 
@@ -143,7 +143,7 @@ export function useLiveConnection() {
     const audioCtx = audioPlayerContextRef.current;
 
     if (audioCtx.state === 'suspended') {
-        await audioCtx.resume();
+      await audioCtx.resume();
     }
 
     try {
@@ -201,8 +201,8 @@ export function useLiveConnection() {
       canvasElementRef.current = canvasEl;
 
       try {
-  let stream: MediaStream;
-  const sendVideo = options.sendVideo ?? true;
+        let stream: MediaStream;
+        const sendVideo = options.sendVideo ?? true;
 
         if (source === 'screen') {
           if (sendVideo) {
