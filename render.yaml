@@ -1,0 +1,36 @@
+services:
+  - type: web
+    name: realtime-conversational-agent-server
+    runtime: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT main:app"
+    healthCheckPath: "/"
+    envVars:
+      - key: APP_NAME
+        value: agents
+      - key: GOOGLE_API_KEY
+        # Do not hardcode secrets in the Blueprint. Use sync: false so the Dashboard
+        # prompts for the value when initially creating the Blueprint.
+        sync: false
+      - key: AGENT_MODEL
+        value: "gemini-1.5-pro-latest"
+      - key: PYTHON_VERSION
+        value: 3.13.4
+
+  - type: web
+    name: realtime-conversational-agent-client
+    plan: free
+    runtime: static
+    buildCommand: "cd client && npm install && npm run build"
+    staticPublishPath: "./client/out"
+    routes:
+      - type: rewrite
+        source: "/*"
+        destination: "/index.html"
+    envVars:
+      - key: NEXT_PUBLIC_WEBSOCKET_URL
+        fromService:
+          type: web
+          name: realtime-conversational-agent-server
+          property: url
